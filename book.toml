@@ -1,0 +1,15 @@
+[book]
+title = "教練我想玩eBPF"
+authors = ["gamerslouis"]
+language = "zh-TW"
+multilingual = false
+src = "src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+default-theme = "light"
+site-url = "/"
+git-repository-url = "https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911"
+edit-url-template = "https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911"
