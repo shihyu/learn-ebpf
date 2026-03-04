@@ -1,0 +1,636 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Day 30 - eBPF helper function速覽 (下) - 教練我想玩eBPF</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">教練我想玩eBPF</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="day30---ebpf-helper-function速覽-下"><a class="header" href="#day30---ebpf-helper-function速覽-下">Day30 - eBPF helper function速覽 (下)</a></h1>
+<blockquote>
+<p>Day 30<br />
+原文：<a href="https://ithelp.ithome.com.tw/articles/10308777">https://ithelp.ithome.com.tw/articles/10308777</a><br />
+發布日期：2022-10-14</p>
+</blockquote>
+<p>接續昨天的內容，今天會介紹網路相關的helper function。由於網路這塊的helper function相對比較雜多，所以有點難以分類，所以只有XDP和LWT有單獨分類出來，其他的tc, socket相關的全部歸在一類。</p>
+<h3 id="xdp-相關"><a class="header" href="#xdp-相關">XDP 相關</a></h3>
+<ul>
+<li>
+<p>於XDP修改封包大小(可以增大或縮小)</p>
+<ul>
+<li>bpf_xdp_adjust_head</li>
+<li>bpf_xdp_adjust_tail</li>
+</ul>
+</li>
+<li>
+<p>XDP_TX redirect使用</p>
+<ul>
+<li>bpf_redirect_map</li>
+</ul>
+</li>
+<li>
+<p>XDP輸出封包內容到perf event</p>
+<ul>
+<li>bpf_xdp_output</li>
+</ul>
+</li>
+<li>
+<p>調整<code>xdp_md-&gt;data_meta</code></p>
+<ul>
+<li>bpf_xdp_adjust_meta</li>
+</ul>
+</li>
+<li>
+<p>查詢fid (Forward Information Base, L2)</p>
+<ul>
+<li>bpf_fib_lookup (也可用在TC)</li>
+</ul>
+</li>
+</ul>
+<h3 id="lwt-相關"><a class="header" href="#lwt-相關">LWT 相關</a></h3>
+<ul>
+<li>attach 在routing table
+<ul>
+<li>替L3封包進行tunnel header encap
+<ul>
+<li>bpf_lwt_push_encap</li>
+</ul>
+</li>
+<li>外封包(underlay)內容修改
+<ul>
+<li>bpf_lwt_seg6_store_bytes</li>
+<li>bpf_lwt_seg6_adjust_srh</li>
+</ul>
+</li>
+<li>套用IPv6 Segment Routing action決策
+<ul>
+<li>bpf_lwt_seg6_action</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="socket-socket-buffer相關"><a class="header" href="#socket-socket-buffer相關">socket, socket buffer相關</a></h3>
+<ul>
+<li>
+<p>用於<code>BPF_PROG_TYPE_CGROUP_SOCK_ADDR</code>，修改bind address</p>
+<ul>
+<li>bpf_bind</li>
+</ul>
+</li>
+<li>
+<p>讀取封包內容</p>
+<ul>
+<li>bpf_skb_load_bytes</li>
+<li>bpf_skb_load_bytes_relative</li>
+</ul>
+</li>
+<li>
+<p>修改封包內容，可自動更新chekcsum</p>
+<ul>
+<li>bpf_skb_store_bytes</li>
+</ul>
+</li>
+<li>
+<p>改寫l3, l4的checksum</p>
+<ul>
+<li>bpf_l3_csum_replace</li>
+<li>bpf_l4_csum_replace</li>
+</ul>
+</li>
+<li>
+<p>用於計算check sum，可搭配前兩個replace函數使用</p>
+<ul>
+<li>bpf_csum_diff</li>
+</ul>
+</li>
+<li>
+<p>取得xfrm (IPsec相關)</p>
+<ul>
+<li>bpf_skb_get_xfrm_state</li>
+</ul>
+</li>
+<li>
+<p>將封包發到其他的device。後者會複製一分封包。</p>
+<ul>
+<li>bpf_redirect</li>
+<li>bpf_clone_redirect</li>
+</ul>
+</li>
+<li>
+<p>取得classid，參考cgroup 的net_cls，使用於TC egress path。</p>
+<ul>
+<li>bpf_get_cgroup_classid</li>
+</ul>
+</li>
+<li>
+<p>增減vlan header</p>
+<ul>
+<li>bpf_skb_vlan_push</li>
+<li>bpf_skb_vlan_pop</li>
+</ul>
+</li>
+<li>
+<p>取得、修改封包的tunnel(ex. GRE)的tunnel key資訊</p>
+<ul>
+<li>bpf_skb_get_tunnel_key</li>
+<li>bpf_skb_set_tunnel_key</li>
+</ul>
+</li>
+<li>
+<p>取得、修改封包的tunnel資訊</p>
+<ul>
+<li>bpf_skb_get_tunnel_opt</li>
+<li>bpf_skb_set_tunnel_opt</li>
+</ul>
+</li>
+<li>
+<p>取得skb的tclassid欄位，用於clsact TC egress</p>
+<ul>
+<li>bpf_get_route_realm</li>
+</ul>
+</li>
+<li>
+<p>修改封包 prtocol (ipv4, ipv6)</p>
+<ul>
+<li>bpf_skb_change_proto</li>
+</ul>
+</li>
+<li>
+<p>修改封包類型 (broadcast, multicast, unitcast..)</p>
+<ul>
+<li>bpf_skb_change_type</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>BPF_MAP_TYPE_CGROUP_ARRAY</code>使用，檢查skb是不是在某個cgroup v2節點的子節點內。</p>
+<ul>
+<li>bpf_skb_under_cgroup</li>
+</ul>
+</li>
+<li>
+<p>取得skb對應的cgroup id</p>
+<ul>
+<li>bpf_skb_cgroup_id</li>
+</ul>
+</li>
+<li>
+<p>向上查找skb對應cgroup節點的祖先節點id</p>
+<ul>
+<li>bpf_sk_ancestor_cgroup_id</li>
+</ul>
+</li>
+<li>
+<p>取得、修改<code>skb-&gt;hash</code></p>
+<ul>
+<li>bpf_get_hash_recalc</li>
+<li>bpf_set_hash</li>
+</ul>
+</li>
+<li>
+<p>修改封包大小</p>
+<ul>
+<li>bpf_skb_change_tail</li>
+</ul>
+</li>
+<li>
+<p>用於封包payload存取，具體內容有點難理解 (non-linear data)</p>
+<ul>
+<li>bpf_skb_pull_data</li>
+</ul>
+</li>
+<li>
+<p>修改<code>skb-&gt;csum</code></p>
+<ul>
+<li>bpf_csum_update</li>
+</ul>
+</li>
+<li>
+<p>修改<code>skb-&gt;csum_level</code></p>
+<ul>
+<li>bpf_csum_level</li>
+</ul>
+</li>
+<li>
+<p>標註<code>skb-&gt;hash</code>為無效，觸發重算</p>
+<ul>
+<li>bpf_set_hash_invalid</li>
+</ul>
+</li>
+<li>
+<p>將<code>skb-&gt;sk</code>轉成所有欄位都可以訪問的版本</p>
+<ul>
+<li>bpf_sk_fullsock</li>
+</ul>
+</li>
+<li>
+<p>從<code>skb-&gt;sk</code>取得<code>struct bpf_tcp_sock</code></p>
+<ul>
+<li>bpf_tcp_sock</li>
+</ul>
+</li>
+<li>
+<p>向tcp-sock對應的方向發一個tcp-ack</p>
+<ul>
+<li>bpf_tcp_send_ack</li>
+</ul>
+</li>
+<li>
+<p>從<code>skb-&gt;sk</code>取得<code>bpf_sock</code></p>
+<ul>
+<li>bpf_get_listener_sock</li>
+</ul>
+</li>
+<li>
+<p>設置<code>skb-&gt;sk</code></p>
+<ul>
+<li>bpf_sk_assign</li>
+</ul>
+</li>
+<li>
+<p>取得bpf_sock對應的cgroupv2 id</p>
+<ul>
+<li>bpf_sk_cgroup_id</li>
+</ul>
+</li>
+<li>
+<p>取得bpf_sock對應cgroupv2節點的祖先id</p>
+<ul>
+<li>bpf_sk_ancestor_cgroup_id</li>
+</ul>
+</li>
+<li>
+<p>強制轉型sk成特定的XXX_sock結構</p>
+<ul>
+<li>bpf_skc_to_tcp6_sock</li>
+<li>bpf_skc_to_tcp_sock</li>
+<li>bpf_skc_to_tcp_timewait_sock</li>
+<li>bpf_skc_to_tcp_request_sock</li>
+<li>bpf_skc_to_udp6_sock</li>
+</ul>
+</li>
+<li>
+<p>增加packet header區 (headroom) 長度，用於為L3封包直接加上L2的header</p>
+<ul>
+<li>bpf_skb_change_head</li>
+</ul>
+</li>
+<li>
+<p>幫socket建立一個cookie，作為socket的identifier，用於追蹤</p>
+<ul>
+<li>bpf_get_socket_cookie(sk_buff)</li>
+<li>bpf_get_socket_cookie(bpf_sock_addr)</li>
+<li>bpf_get_socket_cookie(bpf_sock_ops)</li>
+</ul>
+</li>
+<li>
+<p>取得socket的owner UID</p>
+<ul>
+<li>bpf_get_socket_uid</li>
+</ul>
+</li>
+<li>
+<p>模擬呼叫getsocketopt、setsockopt</p>
+<ul>
+<li>bpf_getsockopt</li>
+<li>bpf_setsockopt</li>
+</ul>
+</li>
+<li>
+<p>存取skb的ebpf local storage</p>
+<ul>
+<li>bpf_sk_storage_get</li>
+<li>bpf_sk_storage_delete</li>
+</ul>
+</li>
+<li>
+<p>將封包內容輸出到perf event</p>
+<ul>
+<li>bpf_skb_output</li>
+</ul>
+</li>
+<li>
+<p>修改封包payload大小，可以從L2或L3的角度來看</p>
+<ul>
+<li>bpf_skb_adjust_room</li>
+</ul>
+</li>
+<li>
+<p>產生、尋找封包對應的<code>SYN cookie ACK</code></p>
+<ul>
+<li>bpf_tcp_gen_syncookie</li>
+<li>bpf_tcp_check_syncookie</li>
+</ul>
+</li>
+<li>
+<p><code>BPF_PROG_TYPE_SK_SKB</code> (ingress方向)</p>
+<ul>
+<li>搭配<code>BPF_MAP_TYPE_SOCKMAP</code>做socket redierct
+<ul>
+<li>bpf_sk_redirect_map</li>
+<li>bpf_sk_redirect_hash</li>
+</ul>
+</li>
+<li>搜尋滿足對應5-tuple的socket
+<ul>
+<li>bpf_sk_lookup_tcp</li>
+<li>bpf_skc_lookup_tcp</li>
+<li>bpf_sk_lookup_udp</li>
+</ul>
+</li>
+<li>釋放上面兩個找到的socket的reference
+<ul>
+<li>bpf_sk_release</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><code>BPF_PROG_TYPE_SK_MSG</code> (egress方向)</p>
+<ul>
+<li>搭配<code>BPF_MAP_TYPE_SOCKMAP</code>做socket redierct
+<ul>
+<li>bpf_msg_redirect_map</li>
+<li>bpf_msg_redirect_hash</li>
+</ul>
+</li>
+<li>替特定長度的內容作verdict (SK_PASS...)，可用於截短封包，優化處理速度 (tc相關的東西不太熟.../)
+<ul>
+<li>bpf_msg_apply_bytes</li>
+</ul>
+</li>
+<li>跳過接下來某長度的內容不做veridct
+<ul>
+<li>bpf_msg_cork_bytes</li>
+</ul>
+</li>
+<li>讀寫修改特定長度的資料
+<ul>
+<li>bpf_msg_pull_data</li>
+<li>bpf_msg_pop_data</li>
+<li>bpf_msg_push_data</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>更新<code>BPF_MAP_TYPE_SOCKMAP</code></p>
+<ul>
+<li>bpf_sock_map_update</li>
+</ul>
+</li>
+<li>
+<p>設置<code>bpf_sock_ops-&gt;bpf_sock_ops_cb_flags</code>欄位</p>
+<ul>
+<li>bpf_sock_ops_cb_flags_set</li>
+</ul>
+</li>
+<li>
+<p>更新sockhash</p>
+<ul>
+<li>bpf_sock_hash_update</li>
+</ul>
+</li>
+<li>
+<p>用於<code>BPF_PROG_TYPE_SK_REUSEPORT</code>(將多個程式綁定在同一個port上)</p>
+<ul>
+<li>sk_select_reuseport</li>
+</ul>
+</li>
+<li>
+<p>用於<code>BPF_PROG_TYPE_CGROUP_SKB</code>，設置ECN (Explicit Congestion Notification)</p>
+<ul>
+<li>bpf_skb_ecn_set_ce</li>
+</ul>
+</li>
+</ul>
+<h3 id="結語"><a class="header" href="#結語">結語</a></h3>
+<p>到此，我們完成了幾乎所有helper functions的速介，今天同時也是這個系列的第三十天，到了這個系列的尾聲。</p>
+<p>很臨時也沒有經驗和準備的參加了ithome鐵人三十天，同時選擇了eBPF這個沒有真正實際接觸過的主題。很開心能夠透過這三十天的時間，對eBPF這個系統有一個初步的認知，並把搜尋和整理後的資料分享給大家，並建立了一個幾乎每天查資料寫文章的習慣。</p>
+<p>比較可惜的是如前面所說，並沒有一開始規劃好整個30天的文章框架，再加上是完全沒有接觸過的主題，每天的文章內容分量和知識量比預期能寫的要少許多，介紹基本知識和BCC的天數也完全超出了預期，因此很可惜的沒有能在這個系列裡講到原本要介紹的Cilium CNI。加上對eBPF還有tc系統的不熟悉，因此在許多地方的介紹可能並不是非常清楚或有錯誤，還請大家見諒，還有歡迎提出更正。</p>
+<p>這次算是花了30天累積寫文章的經驗，以及除了對eBPF的學習外，還有對Linux kernel souce code還有linux上的一些網路系統概念的學習。</p>
+<p>到這邊下台一鞠躬，希望這個系列有幫助到大家!</p>
+<h3 id="後記"><a class="header" href="#後記">後記</a></h3>
+<p>本系列30天鐵人文章整理重新發表在我的<a href="https://blog.louisif.me/eBPF/Learn-eBPF-Serial-1-Abstract-and-Background/">個人部落格</a>，我的部落格還有其他openstack, terraform, cni相關的文章，有興趣可以來了解交流~!</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="day-29.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="day-29.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

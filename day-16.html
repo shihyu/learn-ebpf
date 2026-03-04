@@ -1,0 +1,336 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Day 16 - BCC tcpconnect (上) - 教練我想玩eBPF</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">教練我想玩eBPF</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="day16---bcc-tcpconnect-上"><a class="header" href="#day16---bcc-tcpconnect-上">Day16 - BCC tcpconnect (上)</a></h1>
+<blockquote>
+<p>Day 16<br />
+原文：<a href="https://ithelp.ithome.com.tw/articles/10302466">https://ithelp.ithome.com.tw/articles/10302466</a><br />
+發布日期：2022-10-01</p>
+</blockquote>
+<p>我們今天要來看的是<code>tools/tcpconnect.py</code>這支程式。原始碼在<a href="https://github.com/iovisor/bcc/blob/master/tools/tcpconnect.py">這邊</a>。</p>
+<p>這隻程式會追蹤紀錄kernel發起的TCP連線</p>
+<pre><code>python3 tools/tcpconnect 
+Tracing connect ... Hit Ctrl-C to end
+PID     COMM         IP SADDR            DADDR            DPORT 
+2553    ssh          4  10.0.2.15        10.0.2.1         22     
+2555    wget         4  10.0.2.15        172.217.160.100  80 
+</code></pre>
+<p>執行結果大概長這樣，可以看到發起連線的pid, 指令名稱，ip version, IP地址和目標port等資訊。</p>
+<p>首先透過<code>argparse</code>定義了指令的參數輸入，主要是提供filter的選項，讓使用者可以透過pid, uid, namespace等參數去filter連線紀錄。</p>
+<pre><code class="language-python">parser = argparse.ArgumentParser(
+    description="Trace TCP connects",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog=examples)
+parser.add_argument("-p", "--pid",
+    help="trace this PID only")
+...
+args = parser.parse_args()
+</code></pre>
+<p>接著就來到主要的eBPF程式碼的定義</p>
+<pre><code class="language-python">bpf_text = """
+#include &lt;uapi/linux/ptrace.h&gt;
+#include &lt;net/sock.h&gt;
+#include &lt;bcc/proto.h&gt;
+
+BPF_HASH(currsock, u32, struct sock *);
+...
+</code></pre>
+<p>首先可以看到<code>BPF_HASH</code>，這是BCC提供的一個巨集，用來定一個hash type的map，對於不同map type BCC都定義了對應的巨集來建立map。具體列表可以參考<a href="https://github.com/iovisor/bcc/blob/master/docs/reference_guide.md#maps">這邊</a>。<br />
+第一個參數是map的名稱，這邊叫做currsock，同時這個變數也用於後續程式碼中對map的參考和API呼叫，例如<code>currsock.lookup(&amp;tid);</code>就是對currsock這個map進行lookup操作。<br />
+接著兩個欄位分別對應key和value的type，key是一個32位元整數，value則對應到sock struct指標。sock結構在<a href="https://elixir.bootlin.com/linux/latest/source/include/net/sock.h#L352">net/sock.h</a>內定義，是linux kernel用來維護socket的資料結構。</p>
+<pre><code class="language-c">struct ipv4_data_t {
+    u64 ts_us;
+    u32 pid;
+    u32 uid;
+    u32 saddr;
+    u32 daddr;
+    u64 ip;
+    u16 lport;
+    u16 dport;
+    char task[TASK_COMM_LEN];
+};
+BPF_PERF_OUTPUT(ipv4_events);
+
+struct ipv6_data_t {
+...
+</code></pre>
+<p>接著分別針對ipv4和ipv6定義了一個data_t的資料結構，用於bpf和userspace client之間傳輸tcp connect的資訊用。</p>
+<p>這邊可以看到另外一個特別的巨集<code>BPF_PERF_OUTPUT</code>。這邊用到了eBPF提供的perf event機制，定義了一個per-CPU的event ring buffer，並提供了對應的bpf_perf_event_output helper function來把資料推進ring buffer給userspace存取。<br />
+在bcc這邊則使用<code>ipv4_events.perf_submit(ctx, &amp;data, sizeof(data));</code>的API來傳輸資料。</p>
+<pre><code class="language-c">// separate flow keys per address family
+struct ipv4_flow_key_t {
+    u32 saddr;
+    u32 daddr;
+    u16 dport;
+};
+BPF_HASH(ipv4_count, struct ipv4_flow_key_t);
+</code></pre>
+<p>接著又是一個HASH map，tcpdconnect提供一個功能選項是統計各種connection的次數，所以這邊定義了一個ipv4_flow_key_t當作key來作為統計依據，<code>BPF_HASH</code>在預設情況下value的type是<code>u64</code>，一個64位元無號整數，因此可以直接拿來統計。</p>
+<p>接著就來到了bpf函數主體，這個函數會被attach到tcp_v4_connect和tcp_v6_connect的kprobe上，當呼叫tcp_v4_connect和tcp_v6_connect時被觸發。</p>
+<pre><code class="language-c">int trace_connect_entry(struct pt_regs *ctx, struct sock *sk)
+{
+    if (container_should_be_filtered()) {
+        return 0;
+    }
+    u64 pid_tgid = bpf_get_current_pid_tgid();
+    u32 pid = pid_tgid &gt;&gt; 32;
+    u32 tid = pid_tgid;
+    FILTER_PID
+    u32 uid = bpf_get_current_uid_gid();
+    FILTER_UID
+    // stash the sock ptr for lookup on return
+    currsock.update(&amp;tid, &amp;sk);
+    return 0;
+};
+</code></pre>
+<p>首先它接收的參數是pt_regs結構和tcp_v4_connect的參數，pt_regs包含了CPU佔存器的數值資訊，作為eBPF的上下文。後面tcp_v4_connect的第一個參數sock結構對應到當次連線的socket資訊，由於後面幾個參數不會使用到所以可以省略掉。</p>
+<pre><code>./tcpconnect --cgroupmap mappath  # only trace cgroups in this BPF map
+./tcpconnect --mntnsmap mappath   # only trace mount namespaces in the map
+</code></pre>
+<p>首先呼叫的是<code>container_should_be_filtered</code>。在argparser中定義了兩個參數cgroupmap和mntnsmap用來針對特定的cgroups或mount namespace。<code>container_should_be_filtered</code>則會負責這兩項的檢查。</p>
+<p>一開始看可能會發現在eBPF程式裡面找不到這個函數定的定義，由於這兩個filter非常常用因此bcc定義了<code>bcc.containers.filter_by_containers</code><a href="https://github.com/iovisor/bcc/blob/master/src/python/bcc/containers.py">函數</a>，在python程式碼裡面會看到，<code>bpf_text = filter_by_containers(args) + bpf_text</code>。<br />
+以cgroup來說，如果使用者有提供<code>cgroupmap</code>這個參數，<code>filter_by_containers</code>會在mappath透過<code>BPF_TABLE_PINNED</code>在BPFFS建立一個hash type的map，根據這個map的key來filter cgroup id，透過<code>bpf_get_current_cgroup_id()</code>取得當前上下文的cgroup_id並只保留有在map內的上下文。</p>
+<p>接著<code>FILTER_PID</code>和<code>FILTER_UID</code>分別是針對pid和uid去filter，在後面的python程式碼中會根據是否有啟用這個選項來把字串替代成對應的程式碼或空字串</p>
+<pre><code>if args.pid:
+    bpf_text = bpf_text.replace('FILTER_PID',
+        'if (pid != %s) { return 0; }' % args.pid)
+bpf_text = bpf_text.replace('FILTER_PID', '')
+</code></pre>
+<p>如果一切都滿足，就會使用tid當key，將sock結構更新到<code>currsock</code> map當中。</p>
+<p>到此我們只處存了tid和最新的sock的資料，<code>currsock</code>不用於把資料發送到userspace client。而是要等到後半部的程式碼處理。明天我們接續講解後半部分的程式碼。</p>
+<blockquote>
+<p>本系列30天鐵人文章同步發表在我的<a href="https://blog.louisif.me/eBPF/Learn-eBPF-Serial-1-Abstract-and-Background/">個人部落格</a></p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="day-15.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="day-17.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="day-15.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="day-17.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

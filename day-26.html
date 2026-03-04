@@ -1,0 +1,351 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Day 26 - Cgroups - 教練我想玩eBPF</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">教練我想玩eBPF</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="day26---cgroups"><a class="header" href="#day26---cgroups">Day26 - Cgroups</a></h1>
+<blockquote>
+<p>Day 26<br />
+原文：<a href="https://ithelp.ithome.com.tw/articles/10307586">https://ithelp.ithome.com.tw/articles/10307586</a><br />
+發布日期：2022-10-11</p>
+</blockquote>
+<p>今天開始我們要進入我們BCC專案學習的最後一個實例了，這次我們要看的是<code>examples/networking/sockmap.py</code>這隻程式。(<a href="https://github.com/iovisor/bcc/blob/master/examples/networking/sockmap.py">原始碼</a>)</p>
+<p>不過在開始進入到正題之前，我們要先來聊聊Linux上的一個重要功能cgroups (control groups)，cgroups是Linux kernel內建的一個機制，可以以進程為最小單位，對可使用的CPU、memory、裝置I/O等資源進行限制、分割。</p>
+<blockquote>
+<p>cgroups目前有v1和v2兩個版本，在分組策略架構上有所差異，這邊介紹只以v1為主</p>
+</blockquote>
+<p>在cgroup的架構內，我們可以針對不同的資源類型進行獨立管理(稱為不同的subsystem或controller) ，一些可能的資源類型和一部份的功能簡介如下</p>
+<ul>
+<li>cpu: 對一定時間週期內，可使用的cpu時間長度限制</li>
+<li>memory: 限制記憶體使用上限以及超出上限時的行為</li>
+<li>blkio: 控制對硬碟等設備的訪問速度上限</li>
+<li>cpuacct: 用來統計目前的CPU使用情況</li>
+<li>devices: 控制可以訪問那些device</li>
+<li>pids: 限制cgroup內可建立的pid數量，也就是進程數量</li>
+</ul>
+<p>接著是<code>hierarchy</code>，cgroup使用樹狀結構來管理資源，一個<code>hierarchy</code>預設會有一個根結點，所有的process (pid都會attach在這個節點上)。</p>
+<p>一個<code>hierarchy</code>可以對應到零個或多個上述的subsystem，並在一個節點內設置上述的那些限制，那這些限制就會套用到在這個節點內的所有process。</p>
+<p>可以在<code>hierarchy</code>內建立子節點，那子節點就會預設套用父節點的所有設置，然後可以只針對有興趣的項目作更細緻的調正。</p>
+<p>一個process在一棵<code>hierarchy</code>只能attach在一個節點上，可以對process設定所在的節點。從process fork出來的process會在同一個節點上，但是搬運process到不同的節點，並不會影響子process。</p>
+<p>Linux透過虛擬檔案系統來提供修改調整cgroups的user space介面。<br />
+通常來說介面會被掛載在<code>/sys/fs/cgroup</code>這個路徑下。</p>
+<p>我們可以透過mount來建立<code>hierarchy</code>並把他關連到一個或多個subsystem</p>
+<pre><code class="language-shell"># 關連到CPU
+mkdir /sys/fs/cgroup/cpu
+mount -t cgroup -o cpu none /sys/fs/cgroup/cpu
+# 關連到CPU和CPUACCT
+mkdir /sys/fs/cgroup/cpu,cpuacct
+mount -t cgroup -o cpu,cpuacct none /sys/fs/cgroup/cpu,cpuacct
+# 不過/sys/fs/cgroup目錄可能會被系統設置為read only，避免隨意變更，而且通常不需要增減hierarchy本身，只是在hierarchy內增減節點管理
+</code></pre>
+<p>查看所有目前的hierarchy</p>
+<pre><code class="language-shell">ls /sys/fs/cgroup/ -l
+total 0
+dr-xr-xr-x 4 root root  0  十  11 22:50 blkio
+lrwxrwxrwx 1 root root 11  十  11 22:50 cpu -&gt; cpu,cpuacct
+lrwxrwxrwx 1 root root 11  十  11 22:50 cpuacct -&gt; cpu,cpuacct
+dr-xr-xr-x 4 root root  0  十  11 22:50 cpu,cpuacct
+dr-xr-xr-x 2 root root  0  十  11 22:50 cpuset
+dr-xr-xr-x 4 root root  0  十  11 22:50 devices
+dr-xr-xr-x 2 root root  0  十  11 22:50 freezer
+dr-xr-xr-x 2 root root  0  十  11 22:50 hugetlb
+dr-xr-xr-x 4 root root  0  十  11 22:50 memory
+dr-xr-xr-x 2 root root  0  十  11 22:50 misc
+lrwxrwxrwx 1 root root 16  十  11 22:50 net_cls -&gt; net_cls,net_prio
+dr-xr-xr-x 2 root root  0  十  11 22:50 net_cls,net_prio
+lrwxrwxrwx 1 root root 16  十  11 22:50 net_prio -&gt; net_cls,net_prio
+dr-xr-xr-x 2 root root  0  十  11 22:50 perf_event
+dr-xr-xr-x 4 root root  0  十  11 22:50 pids
+dr-xr-xr-x 2 root root  0  十  11 22:50 rdma
+dr-xr-xr-x 5 root root  0  十  11 22:50 systemd
+dr-xr-xr-x 5 root root  0  十  11 22:50 unified
+</code></pre>
+<p>接著查看cpu的根結點</p>
+<pre><code>ls /sys/fs/cgroup/cpu/ -l
+total 0
+-rw-r--r--  1 root root 0  十  11 21:39 cgroup.clone_children
+-rw-r--r--  1 root root 0  十  11 21:39 cgroup.procs
+-r--r--r--  1 root root 0  十  11 21:39 cgroup.sane_behavior
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.stat
+-rw-r--r--  1 root root 0  十  11 21:39 cpuacct.usage
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.usage_all
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.usage_percpu
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.usage_percpu_sys
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.usage_percpu_user
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.usage_sys
+-r--r--r--  1 root root 0  十  11 21:39 cpuacct.usage_user
+-rw-r--r--  1 root root 0  十  11 21:39 cpu.cfs_period_us
+-rw-r--r--  1 root root 0  十  11 21:39 cpu.cfs_quota_us
+-rw-r--r--  1 root root 0  十  11 21:39 cpu.shares
+-r--r--r--  1 root root 0  十  11 21:39 cpu.stat
+drwxr-xr-x  4 root root 0  八  24 14:50 docker
+-rw-r--r--  1 root root 0  十  11 21:39 notify_on_release
+-rw-r--r--  1 root root 0  十  11 21:39 release_agent
+drwxr-xr-x 96 root root 0  十  11 06:05 system.slice
+-rw-r--r--  1 root root 0  十  11 21:39 tasks
+drwxr-xr-x  2 root root 0  十  11 21:31 user.slice
+</code></pre>
+<p>由於前面可以看到cpu被link到cpu,cpuacct，所以可以同時查看到cpu.*和cpuacct.*的選項。</p>
+<p>透過cpu.cfs_quota_us和cpu.cfs_period_us我們就能控制這個節點上所有process在period內可使用的CPU時間(quota)。</p>
+<p>透過<code>cat tasks</code>我們可以看到所有attach在這個節點上的pid。</p>
+<p>可以看到有三個資料夾<code>docker</code>, <code>system.slice</code>, <code>user.slice</code>，是三個hierarchy上的子節點，我們可以簡單的透過<code>mkdir</code>的方式建立子節點。由於這台設備上有跑docker，所以docker會在/sys/fs/cgroup/cpu/docker/目錄下為每個container建立獨立的子節點，透過cgroup的方式限制容器的資源使用量。</p>
+<pre><code class="language-shell">docker ps --format="{{.ID}}"
+90f64cb70ee0
+177d1a3920ec
+
+ls /sys/fs/cgroup/cpu/docker -l
+total 0
+drwxr-xr-x 2 root root 0  八  24 14:50 177d1a3920ec9....
+drwxr-xr-x 2 root root 0  八  24 14:50 90f64cb70ee068...
+-rw-r--r-- 1 root root 0  十  11 21:39 cgroup.clone_children
+-rw-r--r-- 1 root root 0  十  11 21:39 cgroup.procs
+...
+</code></pre>
+<blockquote>
+<p>在許多發行版上使用systemd來做為核心系統管理程式，也就會透過systemd來管理cgroup，因此在設置kubelet時會建議將cgroup driver從cgroupfs改成systemd，統一由systemd來管理，避免同時有兩個系統在調整cgroup</p>
+</blockquote>
+<p>cgroup v2調整了管理介面的結構，只保留了單一個hierarchy (/sys/fs/cgroup/unified)管理所有的subsystem，因為切出多個hierarchy來管理的方式被認為是不必要且增加系統複雜度的。</p>
+<p>到這邊大概介紹完了cgroup，由於這次sockmap.py使用的program type的hook point會在cgroup上，所以趁這個機會詳細了解了一下cgroup。</p>
+<ul>
+<li>參考文件
+<ul>
+<li><a href="https://man7.org/linux/man-pages/man7/cgroups.7.html">https://man7.org/linux/man-pages/man7/cgroups.7.html</a></li>
+<li><a href="https://medium.com/starbugs/%E7%AC%AC%E4%B8%80%E5%8D%83%E9%9B%B6%E4%B8%80%E7%AF%87%E7%9A%84-cgroups-%E4%BB%8B%E7%B4%B9-a1c5005be88c">https://medium.com/starbugs/%E7%AC%AC%E4%B8%80%E5%8D%83%E9%9B%B6%E4%B8%80%E7%AF%87%E7%9A%84-cgroups-%E4%BB%8B%E7%B4%B9-a1c5005be88c</a></li>
+<li><a href="https://blog.csdn.net/qq_46595591/article/details/107634756">https://blog.csdn.net/qq_46595591/article/details/107634756</a></li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>本系列30天鐵人文章同步發表在我的<a href="https://blog.louisif.me/eBPF/Learn-eBPF-Serial-1-Abstract-and-Background/">個人部落格</a></p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="day-25.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="day-27.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="day-25.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="day-27.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

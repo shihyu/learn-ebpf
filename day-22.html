@@ -1,0 +1,354 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Day 22 - BCC xdp_redirect_map - 教練我想玩eBPF</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">教練我想玩eBPF</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="day22---bcc-xdp_redirect_map"><a class="header" href="#day22---bcc-xdp_redirect_map">Day22 - BCC xdp_redirect_map</a></h1>
+<blockquote>
+<p>Day 22<br />
+原文：<a href="https://ithelp.ithome.com.tw/articles/10305548">https://ithelp.ithome.com.tw/articles/10305548</a><br />
+發布日期：2022-10-07</p>
+</blockquote>
+<p>接續昨天的內容，今天正式來看看<code>examples/networking/xdp/xdp_redirect_map.py</code></p>
+<p>這隻程式的功能很簡單，執行時指定兩個interface <code>in_intf</code>和<code>out_intf</code>，所有從<code>in_intf</code>進入的封包會直接從<code>out_intf</code>送出去，並且交換src mac address和dst mac address，同時記錄每秒鐘通過該介面的封包個數。</p>
+<p>從out_intf進入的封包則正常交給linux network系統處理。<br />
+<img src="images/day-22-01.png" alt="" /><br />
+首先我們一樣要先驗證程式的執行，首先建立一個network namespace net0。然後把兩個網卡<code>veth_in_intf</code>, <code>veth_out_intf</code>放進去，作為xdp_redirect_map使用的網卡。為了方便打流量，我們幫<code>in_intf</code>指定一個ip 10.10.10.1，並幫加入一個不存在的遠端ip 10.10.10.2，接著我們就可以透過ping 10.10.10.2來從in_intf打流量，透過tcpdump捕捉out_intf的封包，應該就可以看到從10.10.10.1過來的封包，同時mac address被交換了，所以可以看到src mac 變成ee:11:ee:11:ee:11。</p>
+<pre><code>ip netns add net0
+ip link add in_intf type veth peer name veth_in_intf
+ip link add out_intf type veth peer name veth_out_intf
+ip link set veth_in_intf netns net0
+ip link set veth_out_intf netns net0
+ip link set in_intf up
+ip link set out_intf up
+ip netns exec net0 ip link set veth_in_intf up
+ip netns exec net0 ip link set veth_out_intf up
+ip address add 10.10.10.1/24 dev in_intf
+ip neigh add 10.10.10.2 lladdr ee:11:ee:11:ee:11 dev in_intf
+</code></pre>
+<blockquote>
+<p>目前這個部分其實沒有驗證成功，雖然根據xdp redirect的log，封包是真的有成功被轉送到veth_out_intf的，然後透過tcpdump卻沒有在out_intf上收到封包，可惜的是具體原因沒能確定。</p>
+</blockquote>
+<p>這次的程式非常簡短，首先是一個swap_src_dst_mac函數，用於交換封包的src mac address和dst mac address。</p>
+<pre><code class="language-c">static inline void swap_src_dst_mac(void *data)
+{
+    unsigned short *p = data;
+    unsigned short dst[3];
+    dst[0] = p[0];
+    dst[1] = p[1];
+    dst[2] = p[2];
+    p[0] = p[3];
+    p[1] = p[4];
+    p[2] = p[5];
+    p[3] = dst[0];
+    p[4] = dst[1];
+    p[5] = dst[2];
+}
+</code></pre>
+<p>由於mac address在ethernet header的前12個bit所以可以很簡單地進行交換。</p>
+<p>接著就直接進入到了attach在in interface上的XDP函數</p>
+<pre><code class="language-c">int xdp_redirect_map(struct xdp_md *ctx) {
+    void* data_end = (void*)(long)ctx-&gt;data_end;
+    void* data = (void*)(long)ctx-&gt;data;
+    struct ethhdr *eth = data;
+    uint32_t key = 0;
+    long *value;
+    uint64_t nh_off;
+    nh_off = sizeof(*eth);
+    if (data + nh_off  &gt; data_end)
+        return XDP_DROP;
+    value = rxcnt.lookup(&amp;key);
+    if (value)
+        *value += 1;
+    swap_src_dst_mac(data);
+    return tx_port.redirect_map(0, 0);
+}
+</code></pre>
+<p>首先data及data_end是分別指到封包頭尾的指標，由於封包頭都是ethernet header，因此可以直接將data轉成<code>ethhdr</code>指標。<br />
+首先對ethernet封包做一個完整性檢查，<code>data + nh_off &gt; data_end</code>表示封包大小小於一個ethernet header，表示封包表示不完整，就直接將封包透過<code>XDP_DROP</code>丟棄。</p>
+<p>接著<code>rxcxt</code>是預先定義的一個 <code>BPF_PERCPU_ARRAY(rxcnt, long, 1);</code>，PER_CPU map的特性是每顆CPU上都會保有一份獨立不同步的資料，因此可以避免cpu之間的race condition，減少lock的開銷。<br />
+這邊指定每個CPU上的array長度為1，可以參考Day11有介紹過，是一個特別的使用技巧，可以簡單看成一個可以跟user space share的全域變數。</p>
+<pre><code class="language-c">uint32_t key = 0;
+value = rxcnt.lookup(&amp;key);
+if (value)
+    *value += 1;
+    
+</code></pre>
+<p>這邊的用途是用來統計經過的封包個數，因此這邊非常簡單，統一使用0當作key去存取唯一的value，然後每經過一個封包就將value加一，這邊可以注意到lookup回傳的是pointer，因此可以直接對他做修改即可保存。</p>
+<pre><code class="language-c">swap_src_dst_mac(data);
+return tx_port.redirect_map(0, 0);
+</code></pre>
+<p>最後會呼叫<code>swap_src_dst_mac</code>來交換封包，然後透過<code>redirect_map</code>來將封包送到對應的out interface。</p>
+<p>BPF_MAP_TYPE_DEVMAP和BPF_MAP_TYPE_CUPMAP是用來搭配XDP_REDIRECT，將封包導向透定的CPU或著從其他interface送出去的。</p>
+<p>而這邊的redirect_map在編譯時會被修改為呼叫bpf_redirect_map這個helper function。其定義為<code>long bpf_redirect_map(struct bpf_map *map, u32 key, u64 flags)</code>，透過接收map可以根據對應到的value來將封包導向到interface或著CPU，設置方法會在後面的python code介紹。<br />
+由於我們今天只為有一個out interface，因此可以很簡單的指定key為0</p>
+<p>後面的flags目前只有使用最後兩個bit，可以當作key找不到時redirect_map的回傳值，因此以本次的code來說，預設的回傳數值是0，也就對應到XDP_ABORTED。</p>
+<pre><code class="language-c">int xdp_dummy(struct xdp_md *ctx) {
+    return XDP_PASS;
+}
+</code></pre>
+<p>最後一段程式碼<code>xdp_dummy</code>是用來皆在out interface上的XDP程式，但他就只是簡單的<code>XDP_PASS</code>，讓進入的封包繼續交由linux kernel來處理。</p>
+<p>接下來就進入到python code的部分</p>
+<pre><code class="language-python">in_if = sys.argv[1]
+out_if = sys.argv[2]
+
+ip = pyroute2.IPRoute()
+out_idx = ip.link_lookup(ifname=out_if)[0]
+</code></pre>
+<p>首先將兩張網卡的名稱讀進來，接著透過pyroute2的工具去找到out interface的ifindex</p>
+<pre><code class="language-python">tx_port = b.get_table("tx_port")
+tx_port[0] = ct.c_int(out_idx)
+</code></pre>
+<p>接著是設定tx_port這張DEVMAP的key 0為out interface的index，因此所有經過eBPF程式的封包都會丟到out interface</p>
+<pre><code class="language-python">in_fn = b.load_func("xdp_redirect_map", BPF.XDP)
+out_fn = b.load_func("xdp_dummy", BPF.XDP)
+b.attach_xdp(in_if, in_fn, flags)
+b.attach_xdp(out_if, out_fn, flags)
+</code></pre>
+<p>接著就是將eBPF程式attach到兩張網卡上</p>
+<pre><code class="language-python">rxcnt = b.get_table("rxcnt")
+prev = 0
+while 1:
+    val = rxcnt.sum(0).value
+    if val:
+        delta = val - prev
+        prev = val
+        print("{} pkt/s".format(delta))
+    time.sleep(1)
+</code></pre>
+<p>將eBPF程式attach上去之後就完成了封包重導向的工作，剩下的部分是用來統計每秒鐘經過的封包的，這邊的做法很簡單，每秒鐘都去紀錄一次通過封包總量和前一秒鐘的差異就可以算出來這一秒內經過的封包數量。<br />
+這邊比較特別的是<code>rxcnt.sum</code>，前面提到rxcnt是一個per cpu的map，因此這邊使用sum函數將每顆cpu的key 0直接相加起來，就可以得到經過所有CPU的封包總量。</p>
+<blockquote>
+<p>本系列30天鐵人文章同步發表在我的<a href="https://blog.louisif.me/eBPF/Learn-eBPF-Serial-1-Abstract-and-Background/">個人部落格</a></p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="day-21.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="day-23.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="day-21.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="day-23.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

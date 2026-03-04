@@ -1,0 +1,470 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Day 29 - eBPF helper function速覽 (上) - 教練我想玩eBPF</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">教練我想玩eBPF</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="day29---ebpf-helper-function速覽-上"><a class="header" href="#day29---ebpf-helper-function速覽-上">Day29 - eBPF helper function速覽 (上)</a></h1>
+<blockquote>
+<p>Day 29<br />
+原文：<a href="https://ithelp.ithome.com.tw/articles/10308306">https://ithelp.ithome.com.tw/articles/10308306</a><br />
+發布日期：2022-10-14</p>
+</blockquote>
+<p>很快的，這次的鐵人競賽就到尾聲了。<br />
+在eBPF程式裡面要與kernel交互很重要的是helper function，因此在最後的兩天時間，我們要把所有的helper function速覽過一遍。這邊介紹以bpf-helper的<a href="https://man7.org/linux/man-pages/man7/bpf-helpers.7.html">man文件</a>的內容為主，部分的helper function可能因為文件更新而有遺漏。</p>
+<p>接下來的介紹會稍微對helper function做一定程度的分類，但是具體不同的eBPF program type 支援那些helper function可能還是要根據<a href="https://github.com/iovisor/bcc/blob/master/docs/kernel-versions.md">bcc文件</a>、每個helper function對應的commit資訊等查詢。</p>
+<p>今天會先介紹非網路相關的helper function，明天則會介紹網路相關的部分。</p>
+<h3 id="ebpf-map操作類"><a class="header" href="#ebpf-map操作類">eBPF map操作類</a></h3>
+<ul>
+<li>
+<p>array, map類型map的操作函數，對應到查詢、插入或更新、刪除map內的元素。其中update可以透過flag (<code>BPF_NOEXIST</code>, <code>BPF_EXIST</code>, <code>BPF_ANY</code>)決定key是不是不能先存在或一定要存在於map內。</p>
+<ul>
+<li>bpf_map_lookup_elem</li>
+<li>bpf_map_update_elem</li>
+<li>bpf_map_delete_elem</li>
+</ul>
+</li>
+<li>
+<p>用於stack, queue類型map的操作函數。</p>
+<ul>
+<li>bpf_map_peek_elem</li>
+<li>bpf_map_pop_elem</li>
+<li>bpf_map_push_elem</li>
+</ul>
+</li>
+<li>
+<p>用於ringbuff的操作函數 (改進原本perf event map的問題)</p>
+<ul>
+<li>bpf_ringbuf_output</li>
+<li>bpf_ringbuf_reserve</li>
+<li>bpf_ringbuf_submit</li>
+<li>bpf_ringbuf_discard</li>
+<li>bpf_ringbuf_query</li>
+</ul>
+</li>
+</ul>
+<h3 id="通用函數"><a class="header" href="#通用函數">通用函數</a></h3>
+<ul>
+<li>
+<p>生成隨機數</p>
+<ul>
+<li>get_prandom_u32</li>
+</ul>
+</li>
+<li>
+<p><code>atol</code>, <code>atoul</code></p>
+<ul>
+<li>bpf_strtol</li>
+<li>bpf_strtoul</li>
+</ul>
+</li>
+<li>
+<p>取得當前執行eBPF程式的(SMP) processor ID。由於eBPF是no preemption的所以在整個執行過程中processor id不會變。</p>
+<ul>
+<li>bpf_get_smp_processor_id</li>
+</ul>
+</li>
+<li>
+<p>取得當前NUMA (Non-uniform memory access) 的node id。受於匯流排限制，CPU核心可以比較快存取同節點上的memory，透過node id區分。通常是當attach的socket有啟用<code>SO_ATTACH_REUSEPORT_EBPF</code>選項時會用到。</p>
+<ul>
+<li>bpf_get_numa_node_id</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>BPF_MAP_TYPE_PROG_ARRAY</code> map去執行tail call。</p>
+<ul>
+<li>bpf_tail_call</li>
+</ul>
+</li>
+<li>
+<p>取得開機到當下經過的時間，單位是ns，差別在於後者會多包含suspend(暫停)的時間</p>
+<ul>
+<li>bpf_ktime_get_ns</li>
+<li>bpf_ktime_get_boot_ns</li>
+</ul>
+</li>
+<li>
+<p>取得jiffies64</p>
+<ul>
+<li>bpf_jiffies64</li>
+</ul>
+</li>
+<li>
+<p>將字串訊息發送到 /sys/kernel/debug/tracing/trace ，主要用於開發除錯</p>
+<ul>
+<li>bpf_trace_printk</li>
+</ul>
+</li>
+<li>
+<p>寫入seq_file</p>
+<ul>
+<li>bpf_seq_write</li>
+<li>bpf_seq_printf</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>struct bpf_spin_lock</code>提供一個給<code>BPF_MAP_TYPE_HASH</code>和<code>BPF_MAP_TYPE_ARRAY</code>(目前只支援這兩著)裡面value使用的lock，由於一個map裡面只能有一個spin_lock，所以通常是使用把之前提過，整個map固定只有一個元素，把整個map當作一個global variable的用法</p>
+<ul>
+<li>bpf_spin_lock</li>
+<li>bpf_spin_unlock</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>使用，傳輸資料到user space</p>
+<ul>
+<li>bpf_perf_event_output</li>
+</ul>
+</li>
+</ul>
+<h3 id="tracing-相關-kprobe-tracepoint-perf-event"><a class="header" href="#tracing-相關-kprobe-tracepoint-perf-event">Tracing 相關 (kprobe, tracepoint, perf event)</a></h3>
+<ul>
+<li>
+<p>取得當前的tgid, uid, gid, command name, task structure</p>
+<ul>
+<li>bpf_get_current_pid_tgid</li>
+<li>bpf_get_current_uid_gid</li>
+<li>bpf_get_current_comm</li>
+<li>bpf_get_current_task</li>
+</ul>
+</li>
+<li>
+<p>發signal到當前(process, thread)</p>
+<ul>
+<li>bpf_send_signal</li>
+<li>bpf_send_signal_thread</li>
+</ul>
+</li>
+<li>
+<p>用於讀取記憶體資料、字串及寫入記憶體。帶user的版本用於user space memory，其餘用於kernel space memory。</p>
+<ul>
+<li>bpf_probe_read (通常使用後倆著)</li>
+<li>bpf_probe_read_user</li>
+<li>bpf_probe_read_kernel</li>
+<li>bpf_probe_read_str (通常使用後倆著)</li>
+<li>bpf_probe_read_user_str</li>
+<li>bpf_probe_read_kernel_str</li>
+<li>bpf_probe_write_user</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>BPF_MAP_TYPE_STACK_TRACE</code>使用，取得一個stack address hash過的stack id</p>
+<ul>
+<li>bpf_get_stackid</li>
+</ul>
+</li>
+<li>
+<p>取得userspace或kernel space的stack資料</p>
+<ul>
+<li>bpf_get_stack</li>
+<li>bpf_get_task_stack</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>BPF_MAP_TYPE_PERF_EVENT_ARRAY</code>取得perf-event counter的讀數</p>
+<ul>
+<li>bpf_perf_event_read</li>
+<li>bpf_perf_event_read_value (建議使用)</li>
+</ul>
+</li>
+<li>
+<p>用於<code>BPF_PROG_TYPE_PERF_EVENT</code> 取得struct perf_branch_entry</p>
+<ul>
+<li>bpf_read_branch_records</li>
+</ul>
+</li>
+<li>
+<p>搭配<code>BPF_MAP_TYPE_CGROUP_ARRAY</code>使用，檢查是否在某個cgroup v2節點內</p>
+<ul>
+<li>bpf_current_task_under_cgroup</li>
+</ul>
+</li>
+<li>
+<p>查看當前上下文的cgroup節點的祖先節點id</p>
+<ul>
+<li>bpf_get_current_ancestor_cgroup_id</li>
+</ul>
+</li>
+<li>
+<p>取得當前上下文對應的cgroup id</p>
+<ul>
+<li>bpf_get_current_cgroup_id</li>
+</ul>
+</li>
+<li>
+<p>用於kprobe，修改函數回傳值</p>
+<ul>
+<li>bpf_override_return</li>
+</ul>
+</li>
+</ul>
+<h3 id="cgroup-相關"><a class="header" href="#cgroup-相關">Cgroup 相關</a></h3>
+<ul>
+<li>
+<p>取得一個當前network namespace對應的cookie (identifer)</p>
+<ul>
+<li>bpf_get_netns_cookie</li>
+</ul>
+</li>
+<li>
+<p>取得local storage的指標 (cgroup相關可使用的一個儲存區)</p>
+<ul>
+<li>bpf_get_local_storage</li>
+</ul>
+</li>
+<li>
+<p>用於<code>BPF_PROG_TYPE_CGROUP_SYSCTL</code></p>
+<ul>
+<li>取得、更新sysctl資訊
+<ul>
+<li>bpf_sysctl_get_name</li>
+<li>bpf_sysctl_get_current_value</li>
+<li>bpf_sysctl_get_new_value</li>
+<li>bpf_sysctl_set_new_value</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="其他類別"><a class="header" href="#其他類別">其他類別</a></h3>
+<ul>
+<li>LIRC 紅外線收發相關 (BPF_PROG_TYPE_LIRC_MODE2)
+<ul>
+<li>bpf_rc_repeat</li>
+<li>bpf_rc_keydown</li>
+<li>bpf_rc_pointer_rel</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>本系列30天鐵人文章同步發表在我的<a href="https://blog.louisif.me/eBPF/Learn-eBPF-Serial-1-Abstract-and-Background/">個人部落格</a></p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="day-28.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="day-30.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="day-28.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="day-30.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

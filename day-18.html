@@ -1,0 +1,351 @@
+<!DOCTYPE HTML>
+<html lang="zh-TW" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Day 18 - BCC HTTP filter - 教練我想玩eBPF</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="highlight-css" href="highlight.css">
+        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
+        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">教練我想玩eBPF</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://ithelp.ithome.com.tw/m/users/20152703/ironman/5911" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="day18---bcc-http-filter"><a class="header" href="#day18---bcc-http-filter">Day18 - BCC HTTP filter</a></h1>
+<blockquote>
+<p>Day 18<br />
+原文：<a href="https://ithelp.ithome.com.tw/articles/10303660">https://ithelp.ithome.com.tw/articles/10303660</a><br />
+發布日期：2022-10-03</p>
+</blockquote>
+<p>我們今天要來看的是bcc的另外一個範例 <code>examples/networking/http_filter/http-parse-simple.py</code> (<a href="https://github.com/iovisor/bcc/tree/master/examples/networking/http_filter">原始碼</a>)<br />
+首先一樣先了解一下這支程式的功能，http-parse能夠綁定到一張網路卡上面執行，然後提取經過http流量，將http version, method, uri和status輸出顯示。(當然如果經過tls加密的話是沒辦法的)</p>
+<p>執行結果如下</p>
+<pre><code>python http-parse-complete.py 
+GET /pipermail/iovisor-dev/ HTTP/1.1
+HTTP/1.1 200 OK
+GET /favicon.ico HTTP/1.1
+HTTP/1.1 404 Not Found
+GET /pipermail/iovisor-dev/2016-January/thread.html HTTP/1.1
+HTTP/1.1 200 OK
+GET /pipermail/iovisor-dev/2016-January/000046.html HTTP/1.1
+HTTP/1.1 200 OK
+</code></pre>
+<p>前兩天介紹的tcpconnect使用的是<code>BPF_PROG_TYPE_KPROBE</code>這個program type，透過kprobe/kretprobe機制在kernel function被呼叫和回傳的時候執行。</p>
+<p>今天使用的是<code>BPF_PROG_TYPE_SOCKET_FILTER</code>，socket filter 可以對進出socket的封包進行截斷或過濾。特別注意這邊如果會需要擷取封包(長度不等於原始封包長度)則會觸發對封包進行複製，然後修改封包大小。</p>
+<p>socket filter program會在socket層被呼叫(在net/core/sock.c的sock_queue_rcv_skb被呼叫)，並傳入<a href="https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/bpf.h#L5745">_sk_buff結構</a>取得socket上下文及封包的內容。</p>
+<p>透過回傳的數值來決定如何處理該封包，如果回傳的數值大於等於封包長度，等價於保留完整封包，如果長度小於封包長度，則截斷只保留回傳數值長度的封包。其中兩個特例是回傳0和-1。回傳0等價解取一個長度為0的封包，也就是直接丟棄該封包。回傳-1時，由於封包長度是無號整數，-1等價於整數的最大數值，因此保證保留整個完整的封包。</p>
+<p>另外一個關鍵技術是raw socket，我們可以將raw socket監聽某個網路介面上所有進出封包。</p>
+<p>因此整個程式的執行方式是這樣的，在目標網路卡上開啟一個raw socket，透過eBPF程式過濾掉所有非http的封包，只保留http封包送出到raw socket，userspace client接收到封包時，可以直接解析封包欄位提取出http封包資訊。</p>
+<p>在這次的程式中eBPF c code直接寫在一個獨立的http-parse-simple.c檔案中。</p>
+<p>這次的ebpf程式很簡單只有單一個函數<code>http_filter</code>，作為socket filter的進度點。</p>
+<pre><code class="language-c">int http_filter(struct __sk_buff *skb) {
+
+    u8 *cursor = 0;
+
+    struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(*ethernet));
+    //filter IP packets (ethernet type = 0x0800)
+    if (!(ethernet-&gt;type == 0x0800)) {
+        goto DROP;
+    }
+    struct ip_t *ip = cursor_advance(cursor, sizeof(*ip));
+
+    //drop the packet returning 0
+    DROP:
+    return 0;
+...
+</code></pre>
+<p>相信很多人跟我一樣第一眼看到這個程式會覺得非常疑惑，首先看到的是<code>cursor</code>和<code>cursor_advance</code>這兩個東西，從ip那行大概可以猜的出來，cursor是對封包內容存取位置的指標，cursor_advance會輸出當前cursor的位置，然後將cursor向後移動第二個參數的長度。<br />
+由於我們要分析的是http封包，所以他的ether type勢必得是0x0800 (IP)，所以對於不滿足的封包，我們直接goto 到 drop，return 0。表示我們要擷取一個長度為0的封包等價於丟棄該封包。</p>
+<p>在bcc的<a href="https://github.com/iovisor/bcc/blob/master/src/cc/export/helpers.h">helpers.h</a> 輔助函數標頭檔裡面可以看到cursor_advane的定義。</p>
+<pre><code>// packet parsing state machine helpers
+#define cursor_advance(_cursor, _len) \
+  ({ void *_tmp = _cursor; _cursor += _len; _tmp; })
+</code></pre>
+<p>果然符合我們的預期，先將原先cursor指標的數值保留起來，將cursor向後移動len後回傳原始數值。</p>
+<p>後面的程式碼其實就很簡單，首先一路解析封包確保他是一個ip/tcp/http封包、封包長度夠長塞的下一個有效的http封包內容</p>
+<pre><code class="language-c">payload_offset = ETH_HLEN + ip_header_length + tcp_header_length;
+...
+unsigned long p[7];
+int i = 0;
+for (i = 0; i &lt; 7; i++) {
+    p[i] = load_byte(skb, payload_offset + i);
+}
+</code></pre>
+<p>接著將http packet的前7個byte讀出來，load_byte同樣是定義在<a href="https://github.com/iovisor/bcc/blob/master/src/cc/export/helpers.h">helpers.h</a></p>
+<pre><code>unsigned long long load_byte(void *skb,
+    unsigned long long off) asm("llvm.bpf.load.byte");
+</code></pre>
+<p>他會直接轉譯成BPF_LD_ABS，從payload_offset位置開始讀一個byte出來，payload_offset，是前面算出來從ethernet header開始到http payload的位移。</p>
+<pre><code class="language-c">//HTTP
+if ((p[0] == 'H') &amp;&amp; (p[1] == 'T') &amp;&amp; (p[2] == 'T') &amp;&amp; (p[3] == 'P')) {
+    goto KEEP;
+}
+//GET
+if ((p[0] == 'G') &amp;&amp; (p[1] == 'E') &amp;&amp; (p[2] == 'T')) {
+    goto KEEP;
+}
+...
+//no HTTP match
+goto DROP;
+
+//keep the packet and send it to userspace returning -1
+KEEP:
+return -1;
+</code></pre>
+<p>接著檢查如果封包屬於HTTP (以HTTP, GET, POST, PUT, DELETE HEAD...開頭)，就會跳到keep，保留整個完整的封包送到userspace client program。</p>
+<pre><code>GET /favicon.ico HTTP/1.1
+HTTP/1.1 200 OK
+</code></pre>
+<p>HTTP request會以method開頭、response會以HTTP開頭，所以需要查找這些字樣開頭的封包。</p>
+<p>接著我們很快速的來看一下python程式碼的部分。</p>
+<pre><code class="language-python">bpf = BPF(src_file = "http-parse-simple.c",debug = 0)
+function_http_filter = bpf.load_func("http_filter", BPF.SOCKET_FILTER)
+BPF.attach_raw_socket(function_http_filter, interface)
+socket_fd = function_http_filter.sock
+sock = socket.fromfd(socket_fd,socket.PF_PACKET,socket.SOCK_RAW,socket.IPPROTO_IP)
+sock.setblocking(True)
+</code></pre>
+<p>首先我們一樣透過BPF物件完成bpf程式碼的編譯，不一樣的是是這邊直接指定src_file從檔案讀取。<br />
+接著透過load_func，指定socket filter這個program type type和http_filter這個入口函數，並載入ebpf bytecode到kernel<br />
+接著透過bcc提供的attach_raw_socket API在interface上建立row socket並將socket filter program attach上去。<br />
+接著從<code>function_http_filter.sock</code>取得raw socket的file descripter並封裝成python的socket物件。<br />
+由於後面需要socket是阻塞的，但是attach_raw_socket建立出來的socket是非阻塞的，所以這邊透過<code>sock.setblocking(True)</code>阻塞socket</p>
+<pre><code>while 1:
+  #retrieve raw packet from socket
+  packet_str = os.read(socket_fd,2048)
+  packet_bytearray = bytearray(packet_str)
+  ...
+  for i in range (payload_offset,len(packet_bytearray)-1):
+    if (packet_bytearray[i]== 0x0A): # \n
+      if (packet_bytearray[i-1] == 0x0D): \r
+        break # 遇到http的換行\r\n則結束
+    print ("%c" % chr(packet_bytearray[i]), end = "")
+</code></pre>
+<p>後面的程式碼其實就和ebpf的部分大同小異，從socket讀取封包內容、解析到http payload後，將http payload的第一行輸出出來。</p>
+<p>到此我們就完成了<code>http-parse-simple</code>的解析。</p>
+<blockquote>
+<p>本系列30天鐵人文章同步發表在我的<a href="https://blog.louisif.me/eBPF/Learn-eBPF-Serial-1-Abstract-and-Background/">個人部落格</a></p>
+</blockquote>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="day-17.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="day-19.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="day-17.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="day-19.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
